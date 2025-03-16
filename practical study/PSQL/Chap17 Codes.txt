@@ -1,0 +1,232 @@
+Example 1:
+Client A> SELECT * FROM ACCT_MSTR WHERE ACCT_NO = 'SB9' FOR UPDATE;
+
+Client B> SELECT * FROM ACCT_MSTR WHERE ACCT_NO = 'SB9' FOR UPDATE;
+
+Client B> SELECT * FROM ACCT_MSTR WHERE ACCT_NO = 'SB9' FOR UPDATE NOWAIT;
+
+Example 2:
+Client A> LOCK TABLE EMP_MSTR IN EXCLUSIVE Mode NOWAIT;   
+
+Client A> INSERT INTO EMP_MSTR 
+			(EMP_NO, BRANCH_NO, FNAME, MNAME, LNAME, DEPT, DESIG, MNGR_NO) 
+			VALUES('E100', 'B1', 'Sharanam', 'Chaitanya', 'Shah', 'Administration', 'Project Leader', NULL);
+
+
+Client B> INSERT INTO EMP_MSTR 
+			(EMP_NO, BRANCH_NO, FNAME, MNAME, LNAME, DEPT, DESIG, MNGR_NO) 
+			VALUES('E101', 'B1', 'Vaishali', 'Sharanam', 'Shah', 'Tech Team', 'Programmer', 'E100');
+
+
+Example 3:
+Client A> INSERT INTO BRANCH_MSTR (BRANCH_NO, NAME) VALUES('B7', 'Dahisar');
+
+Client A> SELECT * FROM BRANCH_MSTR;
+
+Client B> SELECT * FROM BRANCH_MSTR;
+
+
+Example 4:
+Client A> UPDATE ACCT_MSTR SET CURBAL = CURBAL + 5000 WHERE ACCT_NO = 'SB9';
+
+Client A> SELECT ACCT_NO, CURBAL FROM ACCT_MSTR;
+
+Client B> SELECT ACCT_NO, CURBAL FROM ACCT_MSTR;
+
+
+Example 5:
+Client A> SELECT ACCT_NO, CURBAL FROM ACCT_MSTR FOR UPDATE;
+
+Client A> UPDATE ACCT_MSTR SET CURBAL = CURBAL + 5000 WHERE ACCT_NO = 'SB9';
+
+Client A> SELECT ACCT_NO, CURBAL FROM ACCT_MSTR;
+
+Client B> SELECT ACCT_NO, CURBAL FROM ACCT_MSTR FOR UPDATE;
+
+
+Example 6:
+Client A> SELECT ACCT_NO, CURBAL FROM ACCT_MSTR FOR UPDATE;
+
+Client A> UPDATE ACCT_MSTR SET CURBAL = CURBAL + 5000 WHERE ACCT_NO = 'SB9';
+
+Client A> SELECT ACCT_NO, CURBAL FROM ACCT_MSTR;
+
+Client B> SELECT ACCT_NO, CURBAL FROM ACCT_MSTR FOR UPDATE NOWAIT;
+
+
+Example 7:
+Client A> DELETE FROM BRANCH_MSTR WHERE BRANCH_NO = 'B5';
+
+Client A> SELECT * FROM BRANCH_MSTR;
+
+Client B> SELECT * FROM BRANCH_MSTR;
+
+
+Example 8:
+Client A> SELECT * FROM BRANCH_MSTR FOR UPDATE;
+
+Client A> DELETE FROM BRANCH_MSTR WHERE BRANCH_NO = 'B5';
+
+Client A> SELECT * FROM BRANCH_MSTR;
+
+Client B> SELECT * FROM BRANCH_MSTR FOR UPDATE;
+
+
+Example 9:
+Client A> SELECT * FROM BRANCH_MSTR FOR UPDATE;
+
+Client A> DELETE FROM BRANCH_MSTR WHERE BRANCH_NO = 'B5';
+
+Client A> SELECT * FROM BRANCH_MSTR;
+
+Client B> SELECT * FROM BRANCH_MSTR FOR UPDATE NOWAIT;
+
+
+Example 10:
+DECLARE
+/* Declaration of memory variables and constants to be used in the Execution section. */
+	ACCT_BALANCE  NUMBER (11,2);
+	ACCT_NUM VARCHAR2(10);
+	TRANS_AMT NUMBER(11,2) ;
+	OPER CHAR(1);
+
+BEGIN
+/* Accept an ACCT_NO,OPER and the TRANS_AMT from the user. */
+	ACCT_NUM := &ACCT_NUM;
+	TRANS_AMT := &TRANS_AMT;
+	OPER := &OPER;
+/* Retrieving the balance from the accounts table where the ACCT_NO in the table is equal to the ACCT_NUM entered by the user. Also the select is with a for update and nowait clause in order to acquire a lock on the record. */
+	SELECT CURBAL INTO ACCT_BALANCE FROM ACCT_MSTR
+		WHERE ACCT_NO = ACCT_NUM FOR UPDATE NOWAIT;
+/* Checking if the operation specified is debit or credit. If the operation specified is debit then the balance is reduced by the TRANS_AMT. If the operation specified is credit then the balance is increased by the TRANS_AMT of the corresponding ACCT_NO. */
+	IF OPER= 'D' THEN
+		UPDATE ACCT_MSTR SET CURBAL = CURBAL - TRANS_AMT
+			WHERE ACCT_NO = ACCT_NUM;
+	ELSIF OPER= 'C' THEN
+		UPDATE ACCT_MSTR SET CURBAL = CURBAL + TRANS_AMT
+			WHERE ACCT_NO = ACCT_NUM;
+	END IF;
+END;
+
+
+Example 11:
+Transaction 1
+BEGIN
+	UPDATE ACCT_MSTR SET CURBAL = 500 WHERE ACCT_NO='SB1';
+	UPDATE ACCT_MSTR SET CURBAL = 2500 WHERE ACCT_NO='CA2';
+END
+
+Transaction 2
+BEGIN
+	UPDATE ACCT_MSTR SET CURBAL = 5000 WHERE ACCT_NO='CA2';
+	UPDATE ACCT_MSTR SET CURBAL = 3500 WHERE ACCT_NO='SB1';
+END
+
+
+Example 12: 
+CREATE TABLE ACCT_CUST_INTRO_NOM (
+	ACCT_NO VARCHAR2(10),
+	CUST_NO VARCHAR2(10),
+	INTRO_CUST_NO VARCHAR2(10),
+	NOMINEE_NO VARCHAR2(10));
+		
+DECLARE
+	mACCT_NO VARCHAR2(10);
+	mCUST_NO VARCHAR2(10);
+	mINTRO_CUST_NO VARCHAR2(10);
+	mNOMINEE_NO VARCHAR2(10);
+	
+BEGIN
+	mACCT_NO := & mACCT_NO;
+/*Retrieving records from the ACCT_MSTR table and assigning them to memory variables for the ACCT_NO entered by the user */
+	SELECT ACCT_NO, INTRO_CUST_NO, CUST_NO, NOMINEE_NO 
+		INTO mACCT_NO, mCUST_NO, mINTRO_CUST_NO, mNOMINEE_NO 
+		FROM ACCT_MSTR, ACCT_FD_CUST_DTLS, NOMINEE_MSTR 
+		WHERE ACCT_MSTR.ACCT_NO = ACCT_FD_CUST_DTLS.ACCT_FD_NO 
+			AND ACCT_FD_CUST_DTLS.ACCT_FD_NO = NOMINEE_MSTR.ACCT_FD_NO 
+			AND ACCT_NO = mACCT_NO;
+/* Inserting values into the ACCT_CUST_INTRO_NOM table*/
+	INSERT INTO ACCT_CUST_INTRO_NOM 
+		VALUES(mACCT_NO, mCUST_NO, mINTRO_CUST_NO, mNOMINEE_NO);
+
+ 
+EXCEPTION
+/* Using the Oracle engine's named exception handler to handle the error condition that may occur if the user enters a ACCT_NO that is not present in the ACCT_MSTR table*/
+	WHEN NO_DATA_FOUND THEN
+		DBMS_OUTPUT.PUT_LINE('Account No.' || mACCT_NO || ' is not present in the ACCT_MSTR table');
+END;
+
+
+Example 13:
+DECLARE
+/* Declaration of memory variables and constants to be used in the Execution section. */
+	ACCT_BALANCE  NUMBER (11,2);
+	ACCT_NUM VARCHAR2(10);
+	TRANS_AMT NUMBER(11,2) ;
+	OPER CHAR(1);
+/*Declaring a variable of the type exception and associating the variable to an Oracle error number */
+RESOURCE_BUSY EXCEPTION;
+PRAGMA EXCEPTION_INIT (RESOURCE_BUSY,-00054);
+
+BEGIN
+/* Accept an ACCT_NO,OPER and the TRANS_AMT from the user. */
+	ACCT_NUM := &ACCT_NUM;
+	TRANS_AMT := &TRANS_AMT;
+	OPER := &OPER;
+/* Retrieving the balance from the accounts table where the ACCT_NO in the table is equal to the ACCT_NUM entered by the user. Also the select is with a for update and nowait clause in order to acquire a lock on the record. */
+	SELECT CURBAL INTO ACCT_BALANCE FROM ACCT_MSTR 
+		WHERE ACCT_NO = ACCT_NUM FOR UPDATE NOWAIT;
+
+/* Checking if the operation specified is debit or credit. If the operation specified is debit then the balance is reduced by the TRANS_AMT. If the operation specified is credit then the balance is increased by the TRANS_AMT of the corresponding ACCT_NO. */
+	IF OPER= 'D' THEN
+		UPDATE ACCT_MSTR SET CURBAL = CURBAL - TRANS_AMT
+			WHERE ACCT_NO = ACCT_NUM;
+	ELSIF OPER= 'C' THEN
+		UPDATE ACCT_MSTR SET CURBAL = CURBAL + TRANS_AMT
+			WHERE ACCT_NO = ACCT_NUM;
+	END IF;
+
+EXCEPTION
+	WHEN RESOURCE_BUSY THEN
+	DBMS_OUTPUT.PUT_LINE('The row is in use');
+END;
+
+
+Example 14:
+DECLARE
+/* Declaration of memory variables and constants to be used in the Execution section. */
+	ACCT_BALANCE  NUMBER (11,2);
+	ACCT_NUM VARCHAR2(10);
+	TRANS_AMT NUMBER(11,2) ;
+	OPER CHAR(1);
+/* Declaring a variable of the type exception. */
+	MORE_THAN_BAL  EXCEPTION;
+
+BEGIN
+/* Accept an ACCT_NO,OPER and the TRANS_AMT from the user. */
+	ACCT_NUM := &ACCT_NUM;
+	TRANS_AMT := &TRANS_AMT;
+	OPER := &OPER;
+/* Retrieving the balance from the accounts table where the ACCT_NO in the table is equal to the ACCT_NUM entered by the user. Also the select is with a for update and nowait clause in order to acquire a lock on the record. */
+	SELECT CURBAL INTO ACCT_BALANCE FROM ACCT_MSTR 
+		WHERE ACCT_NO = ACCT_NUM;
+ 
+/* Checking if the operation specified is debit or credit. If the operation specified is debit then the balance is reduced by the TRANS_AMT. If the operation specified is credit then the balance is increased by the TRANS_AMT of the corresponding ACCT_NO. */
+	IF OPER= 'D' THEN
+		IF TRANS_AMT < ACCT_BALANCE THEN
+			UPDATE ACCT_MSTR SET CURBAL = CURBAL - TRANS_AMT
+				WHERE ACCT_NO = ACCT_NUM;
+		ELSE
+			RAISE MORE_THAN_BAL;
+		END IF;
+	ELSIF OPER= 'C' THEN
+		UPDATE ACCT_MSTR SET CURBAL = CURBAL + TRANS_AMT
+			WHERE ACCT_NO = ACCT_NUM;
+	END IF;
+
+EXCEPTION
+	WHEN MORE_THAN_BAL THEN
+		DBMS_OUTPUT.PUT_LINE('Attempted to withdraw more than the current balance ' || ACCT_BALANCE || ' from the account number ' || ACCT_NUM);
+END;
+
+

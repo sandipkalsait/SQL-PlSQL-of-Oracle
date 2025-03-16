@@ -1,0 +1,69 @@
+SOLUTIONS TO HANDS ON EXERCISES
+11. SQL PERFORMANCE TUNING
+1.
+a)	Creating a simple index idx_Prod on product cost price from the Product_Master table.
+	CREATE INDEX idx_prod ON Product_Master (CostPrice);
+
+b)	Creating a sequence inv_seq.
+	CREATE SEQUENCE inv_seq 
+		INCREMENT BY 3 START WITH 1 
+		MINVALUE 1 MAXVALUE 9999 CYCLE Cache 4;
+c)	Create view on OrderNo, OrderDate, OrderStatus of the Sales_Order table and ProductNo,ProductRate and QtyOrdered of Sales_Order_Details.
+	CREATE VIEW vw_Sal_Ord AS 
+		SELECT s.OrderNo, s.OrderDate, sod.ProductNo, sod.ProductRate, sod.QtyOrdered, s.Orderstatus 
+		FROM Sales_Order s, Sales_Order_Details sod WHERE s.OrderNo = sod.OrderNo;
+
+12. SECURITY MANAGEMENT USING SQL
+1.GRANT SELECT ON Sales_Order TO IVAN WITH GRANT OPTION;
+	GRANT SELECT ON Sales_Order_Details TO IVAN WITH GRANT OPTION;
+
+2.	GRANT ALL 	ON Client_Master TO IVAN;
+
+3.	REVOKE ALL ON Client_Master FROM IVAN;
+
+13. OOPS IN ORACLE
+
+1.	Creatint the Address_Ty type:
+a)	Type Name: Address_Ty
+	CREATE TYPE Address_Ty AS OBJECT (
+		Address1 varchar2(30), Address2 varchar2(30), City varchar2(20), 
+		PinCode number, State varchar2(20));
+2.	Creating the Salesman_Master table:
+a)	Table Name:  Salesman_Master
+	CREATE TABLE Salesman_Master(
+		Salesman_no varchar2(6), Salesman_name varchar2(20), Address Address_Ty, 
+		SalAmt number(8,2), SaleTrgt number(6,2), SaleAchvd number(6,2), 
+		Remarks varchar2(60));
+
+3.	Inserting data into the Salesman_Master table:
+a)	Data for Salesman_Master table
+	INSERT INTO Salesman_Master 
+		VALUES ('S00001', 'Aman', Address_Ty('A/14', 'Worli', 'Mumbai', 400002, 'Maharashtra'), 3000, 100, 50, 'Good');
+	INSERT INTO Salesman_Master 
+		VALUES ('S00002', 'Omkar', Address_Ty('65', 'Nariman', 'Mumbai', 400001, 'Maharashtra'), 3000, 200, 100, 'Good');
+	INSERT INTO Salesman_Master 
+		VALUES ('S00003', 'Raj', Address_Ty('P-7', 'Bandra', 'Mumbai', 400032, 'Maharashtra'), 3000, 200, 100, 'Good');
+	INSERT INTO Salesman_Master 
+		VALUES ('S00004', 'Ashish', Address_Ty('A/5', 'Juhu', 'Bombay', 400044, 'Maharashtra'), 3500, 200, 150, 'Good');
+
+4.	
+a)	SELECT sales.address.city, sales.address.state FROM salesman_master sales;
+
+b)	Changing the CITY value for salesman who live in Bombay to Chennai
+	UPDATE Salesman_Master Sales SET Sales.Address.city='Chennai' 
+		WHERE Sales.Address.city='Bombay';
+c)	Deleting the record for the salesman who live in Chennai
+	DELETE FROM Salesman_Master Sales WHERE Sales.Address.city='Chennai';
+
+5.	SQL statement for creating object types:
+a)CREATE OR REPLACE TYPE Dependent_ty AS OBJECT(Relation varchar2(15),Age number);
+
+b)CREATE OR REPLACE TYPE Dependent_List AS TABLE OF Dependent_Ty;
+
+c)CREATE OR REPLACE TYPE Salesman_info_ty AS OBJECT(
+		id number(5), name varchar2(20), dependents dependent_list);
+d)CREATE TABLE Salesman_info OF Salesman_info_ty 
+		NESTED TABLE dependents STORE AS Dependents_ty;
+
+
+

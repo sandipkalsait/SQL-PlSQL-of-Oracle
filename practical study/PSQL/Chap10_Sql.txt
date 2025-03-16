@@ -1,0 +1,401 @@
+Example 1:
+SELECT BRANCH_NO "Branch No.", COUNT(EMP_NO) "No. Of Employees" 
+	FROM EMP_MSTR GROUP BY BRANCH_NO;
+
+Example 2:
+SELECT VERI_EMP_NO "Emp. No.", COUNT(ACCT_NO) "No. Of A/Cs Verified" 
+	FROM ACCT_MSTR GROUP BY VERI_EMP_NO;
+
+Example 3:
+SELECT BRANCH_NO "Branch No.", TYPE "A/C Type", COUNT(ACCT_NO) "No. Of A/Cs" 
+	FROM ACCT_MSTR GROUP BY BRANCH_NO, TYPE;
+
+Example 4:
+SELECT CUST_NO, COUNT(ACCT_FD_NO) "No. Of A/Cs Held" FROM ACCT_FD_CUST_DTLS 
+	WHERE ACCT_FD_NO LIKE 'CA%' OR ACCT_FD_NO LIKE 'SB%' 
+		GROUP BY CUST_NO HAVING COUNT(ACCT_FD_NO)>1;
+
+Example 5:
+SELECT BRANCH_NO, COUNT(ACCT_NO) "No. Of A/Cs Activated"
+	FROM ACCT_MSTR WHERE TO_CHAR(OPNDT, 'DD-MM-YYYY') > '03-01-2003' 
+		GROUP BY BRANCH_NO HAVING COUNT(ACCT_NO) > 1;
+
+Example 6:
+SELECT CUST_NO, COUNT(ACCT_FD_NO) "No. Of A/Cs Or FDs Held" 
+	FROM ACCT_FD_CUST_DTLS GROUP BY CUST_NO HAVING COUNT(ACCT_FD_NO) = 1;
+
+Example 7:
+SELECT CUST_NO, COUNT(ACCT_FD_NO) "No. Of A/Cs or FDs Held" 
+	FROM ACCT_FD_CUST_DTLS GROUP BY CUST_NO HAVING COUNT(ACCT_FD_NO) > 1;
+
+Example 8:
+SELECT FD_SER_NO, FD_NO, SUM(AMT), SUM(DUEAMT) 
+	FROM FD_DTLS
+	GROUP BY ROLLUP (FD_SER_NO, FD_NO);
+
+Example 9:
+SELECT BRANCH_NO, ACCT_NO, SUM(CURBAL) FROM ACCT_MSTR
+	GROUP BY CUBE (BRANCH_NO, ACCT_NO);
+
+Example 10:
+SELECT CODE_NO "Cust. No.", ADDR1 || ' ' || ADDR2 || ' ' || CITY || ', ' || STATE || ', ' || PINCODE "Address" 
+	FROM ADDR_DTLS WHERE CODE_NO IN(SELECT CUST_NO FROM CUST_MSTR 
+		WHERE FNAME = 'Ivan' AND LNAME = 'Bayross');
+SELECT CUST_NO FROM CUST_MSTR WHERE FNAME = 'IVAN' AND LNAME = 'BAYROSS';
+SELECT CODE_NO "Cust. No.", ADDR1 || ' ' || ADDR2 || ' ' || CITY || ', ' || STATE || ', ' || PINCODE "Address" 
+	FROM ADDR_DTLS WHERE CODE_NO IN('C1');
+
+Example 11:
+SELECT (FNAME || ' ' || LNAME) "Customer" FROM CUST_MSTR 
+	WHERE CUST_NO IN(SELECT CODE_NO FROM ADDR_DTLS 
+		WHERE CODE_NO LIKE 'C%' AND PINCODE NOT IN(SELECT PINCODE 
+		FROM ADDR_DTLS WHERE CODE_NO LIKE 'B%'));
+SELECT PINCODE FROM ADDR_DTLS WHERE CODE_NO LIKE 'B%';
+SELECT (FNAME || ' ' || LNAME) "Customer" FROM CUST_MSTR 
+	WHERE CUST_NO IN(SELECT CODE_NO FROM ADDR_DTLS 
+		WHERE CODE_NO LIKE 'C%' 
+		AND PINCODE NOT IN('400057', '400058', '400004', '400045', '400078', '110004'));
+SELECT CODE_NO FROM ADDR_DTLS WHERE CODE_NO LIKE 'C%' 
+			AND PINCODE NOT IN('400057', '400058', '400004', '400045', '400078', '110004');
+SELECT (FName || ' ' || LName) "Customer" FROM Cust_Mstr 
+	WHERE Cust_No IN('C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C7', 'C8', 'C9', 'C10');
+
+Example 12:
+SELECT (FNAME || ' ' || LNAME) "Customer" FROM CUST_MSTR 
+	WHERE CUST_NO IN(SELECT CUST_NO FROM ACCT_FD_CUST_DTLS 
+		WHERE ACCT_FD_NO IN(SELECT FD_SER_NO FROM FD_DTLS WHERE AMT > 5000));
+SELECT FD_SER_NO FROM FD_DTLS WHERE AMT > 5000;
+SELECT (FNAME || ' ' || LNAME) "Customer" FROM CUST_MSTR 
+	WHERE CUST_NO IN(SELECT CUST_NO FROM ACCT_FD_CUST_DTLS 
+		WHERE ACCT_FD_NO IN('FS1', 'FS2', 'FS2', 'FS5'));
+SELECT CUST_NO FROM ACCT_FD_CUST_DTLS 
+	WHERE ACCT_FD_NO IN('FS1', 'FS2', 'FS2', 'FS5');
+	SELECT (FNAME || ' ' || LNAME) "Customer" FROM CUST_MSTR 
+		WHERE CUST_NO IN('C2', 'C3', 'C4', 'C5', 'C5', 'C5');
+
+
+Example 13:
+
+
+Example 14:
+SELECT LENGTH(City), COUNT(Addr_Dtls.Code_No) "No. Of Customers" FROM Addr_Dtls 
+	WHERE Code_No LIKE 'C%' GROUP BY Addr_Dtls.City;
+SELECT Addr_Dtls.City "Len", COUNT(Addr_Dtls.Code_No) "No. Of Customers" 
+	FROM Addr_Dtls WHERE Code_No LIKE 'C%' GROUP BY Len;
+SELECT Addr_Dtls.City, COUNT(Addr_Dtls.Code_No) "No. Of Customers" 
+	FROM Addr_Dtls WHERE Code_No LIKE 'C%' GROUP BY 1;
+
+
+Example :
+SELECT Branch_No, Acct_No, SUM(CurBal) FROM Acct_Mstr
+	WHERE Type = 'CA' AND Corp_Cust_No IS NOT NULL
+		GROUP BY ROLLUP (Branch_No, Acct_No);
+
+Example :
+SELECT Branch_No, Acct_No, SUM(CurBal) FROM Acct_Mstr
+	WHERE Type = 'CA' AND Corp_Cust_No IS NOT NULL
+		GROUP BY CUBE (Branch_No, Acct_No);
+
+Example :
+SELECT Code_No "Cust. No.", Addr1 || ' ' || Addr2 || ' ' || City || ', ' || State 
+	|| ', ' || Pincode "Address" 
+	FROM Addr_Dtls WHERE Code_No IN(SELECT Cust_No FROM Cust_Mstr 
+		WHERE FName = 'Ivan' AND LName = 'Bayross');
+
+
+Example :
+SELECT A.Acct_No, A.CurBal, A.Branch_No, B.AvgBal 
+	FROM Acct_Mstr A,  (SELECT Branch_No, AVG(CurBal) AvgBal FROM Acct_Mstr 
+				GROUP BY Branch_No) B 
+		WHERE A.Branch_No = B.Branch_No AND A.CurBal > B.AvgBal;
+
+Example :
+SELECT Acct_No, CurBal, Branch_No FROM Acct_Mstr A 
+	WHERE CurBal > (SELECT AVG(CurBal) FROM Acct_Mstr 
+		WHERE Branch_No = A.Branch_No);
+
+Example :
+SELECT FName, LName FROM Cust_Mstr 
+	WHERE (FName, LName) IN(SELECT FName, LName FROM EMP_MSTR);
+
+Example :
+SELECT Emp_No, (FName || ' ' || LName) "Name", Dept FROM Emp_Mstr E 
+	ORDER BY (SELECT Name FROM Branch_Mstr B WHERE E.Branch_No = B.Branch_no);
+
+Example :
+SELECT Emp_No, FName, LName FROM Emp_Mstr E 
+	WHERE EXISTS(SELECT 'SCT' FROM Acct_Mstr WHERE Veri_Emp_No = E.Emp_No);
+
+Example :
+SELECT Branch_No, Name FROM Branch_Mstr B 
+	WHERE NOT EXISTS(SELECT 'SCT' FROM Emp_Mstr 
+		WHERE Branch_No = B.Branch_No);
+
+Example :
+SELECT E.Emp_No, (E.FName || ' ' || E.MName || ' ' || E.LName) "Name", B.Name "Branch", E.Dept, E.Desig 
+	FROM Emp_Mstr E INNER JOIN Branch_Mstr B ON B.Branch_No = E.Branch_No;
+SELECT E.Emp_No, (E.FName || ' ' || E.MName || ' ' || E.LName) "Name", B.Name "Branch", E.Dept, E.Desig 
+	FROM Emp_Mstr E, Branch_Mstr B WHERE B.Branch_No = E.Branch_No;
+
+Example :
+SELECT (E.FName || ' ' || E.LName) "Name", E.Dept, C.Cntc_Type, C.Cntc_Data 
+	FROM Emp_Mstr E LEFT JOIN Cntc_Dtls C ON E.Emp_No = C.Code_No;
+SELECT (E.FName || ' ' || E.LName) "Name", E.Dept, C.Cntc_Type, C.Cntc_Data 
+	FROM Emp_Mstr E, Cntc_Dtls C WHERE E.Emp_No = C.Code_No(+);
+
+
+
+
+
+Example :
+SELECT Emp.Fname "Employee", Mngr.Fname "Manager"        
+	FROM Emp_Mstr Emp, Emp_Mstr Mngr
+		WHERE Emp.Mngr_No = Mngr.Emp_No;
+
+Example :
+SELECT First.Intro_Cust_No "Cust. No.", 
+	(SELECT Fname || ' ' || Lname FROM Cust_Mstr 
+		WHERE Cust_No = First.Intro_Cust_No) "Customer", First.Acct_No 
+	FROM Acct_Mstr First, Acct_Mstr Second 
+	WHERE First.Intro_Cust_No = Second.Intro_Cust_No 
+		AND First.Acct_no <> Second.Acct_no;
+
+Example :
+SELECT  'Account No. ' || Acct_No || ' was introduced by Customer No. ' 
+	|| Intro_Cust_No || ' At Branch No. ' || Branch_No FROM Acct_Mstr;
+SELECT  'Account No. ' || Acct_No || ' was introduced by Customer No. ' 
+	|| Intro_Cust_No || ' At Branch No. ' || Branch_No "Accounts Opened" 
+	FROM Acct_Mstr;
+
+Example :
+SELECT Cust_No "ID", Fname || ' ' || Lname "Customer / Employees"
+	FROM Cust_Mstr, Addr_Dtls
+		WHERE Cust_Mstr.Cust_No = Addr_Dtls.Code_No
+			AND Addr_Dtls.City = 'Mumbai' AND Addr_Dtls.Code_No LIKE 'C%'
+UNION 
+SELECT Emp_No "ID", Fname || ' ' || Lname "Customer / Employees"
+	FROM Emp_Mstr, Addr_Dtls
+		WHERE Emp_Mstr.Emp_No = Addr_Dtls.Code_No
+			AND Addr_Dtls.City = 'Mumbai' AND Addr_Dtls.Code_No LIKE 'E%';
+SELECT Cust_No "ID", Fname || ' ' || Lname "Customer / Employees"
+	FROM Cust_Mstr, Addr_Dtls
+		WHERE Cust_Mstr.Cust_No = Addr_Dtls.Code_No
+			AND Addr_Dtls.City = 'Mumbai' AND Addr_Dtls.Code_No LIKE 'C%';
+SELECT Emp_No "ID", Fname || ' ' || Lname " Customer / Employees"
+	FROM Emp_Mstr, Addr_Dtls
+		WHERE Emp_Mstr.Emp_No = Addr_Dtls.Code_No
+			AND Addr_Dtls.City = 'Mumbai' AND Addr_Dtls.Code_No LIKE 'E%';
+
+Example :
+SELECT DISTINCT Cust_No FROM Acct_FD_Cust_Dtls
+	WHERE Acct_FD_No LIKE 'CA%' OR Acct_FD_No LIKE 'SB%' 
+INTERSECT 
+SELECT DISTINCT Cust_No FROM Acct_FD_Cust_Dtls
+	WHERE Acct_FD_No LIKE 'FS%';
+SELECT DISTINCT Cust_No FROM Acct_FD_Cust_Dtls
+	WHERE Acct_FD_No LIKE 'CA%' OR Acct_FD_No LIKE 'SB%';
+SELECT DISTINCT Cust_No FROM Acct_FD_Cust_Dtls
+	WHERE Acct_FD_No LIKE 'FS%';
+
+Example :
+SELECT DISTINCT Cust_No FROM Acct_FD_Cust_Dtls
+	WHERE Acct_FD_No LIKE 'CA%' OR Acct_FD_No LIKE 'SB%' 
+MINUS 
+SELECT DISTINCT Cust_No FROM Acct_FD_Cust_Dtls
+	WHERE Acct_FD_No LIKE 'FS%';
+SELECT DISTINCT Cust_No FROM Acct_FD_Cust_Dtls
+	WHERE Acct_FD_No LIKE 'CA%' OR Acct_FD_No LIKE 'SB%';
+SELECT DISTINCT Cust_No FROM Acct_FD_Cust_Dtls
+	WHERE Acct_FD_No LIKE 'FS%';
+
+
+Example :
+CREATE OR REPLACE PROCEDURE CountRecords(
+varTableName IN Varchar2, varColumnName IN Varchar2)
+IS
+/ * Declaring a handle to the Dynamic SQL cursor . * /
+varCursor Number;
+/ * Declaring a variable t hold the SQL query . * /
+varSQL Varchar2(200);
+/ * Declaring a variable to hold the return value from the
+EXECUTE. */
+varResult Number;
+/ * Declaring a variable to hold the number of count . * /
+varCount Number;
+
+BEGIN
+/ * Defining Dynamic SQL statement . * /
+varSQL := ‘SELECT COUNT (:ColName) ColumnCount
+FROM ‘ || varTableName;
+/ * Opening Cursor . * /
+varCursor := DBMS_SQL.OPEN_CURSOR;
+/ * Parsing SQL Statement . * /
+DBMS_SQL.PARSE(varCursor, varSQL, DBMS_SQL.v7);
+/ * Binding Data. * /
+DBMS_SQL.BIND_VARIABLE (varCursor, ‘ColName’, varColumnName);
+/ * Defining variables to fetch data from the cursor . * /
+DBMS_SQL.DEFINE_COLUMN(varCursor, 1, varCount);
+/ * Executing SQL statement . * /
+varResult := DBMS_SQL.EXECUTE(varCursor);
+
+/* Fetching and Processing . * /
+LOOP
+/ * Exit condition for the loop . * /
+EXIT WHEN DBMS_SQL.FETCH_ROWS (varCursor) = 0;
+/ * Transferring value from the SELECT column list to the variable . * /
+DBMS_SQL.COLUMN_VALUE(varcursor , 1, varCount);
+END LOOP;
+/ * Displaying the number of rows as a message . * /
+DBMS_OUTPUT.PUT_LINE(‘Number of Rows in table named ‘
+
+
+ 
+|| varTableName || ‘ is ‘ || varCount);
+/ * Closing Cursor . * /
+DBMS_SQL.CLOSE_CURSOR(varCursor);
+END CountRecords;
+/
+
+
+
+Example :
+CREATE OR REPLACE FUNCTION ChkAvailability (varTableName IN Varchar2,
+varColumnName IN Varchar2, varColumnValue IN varchar2)
+RETURN Number AS
+
+/ * Declaring a handle to the Dynamic SQL cursor. * /
+curChkAvl Integer;
+/ * Declaring a variable to hold the return value from the EXECUTE. * /
+EXECUTE_FEEDBACK Integer;
+
+BEGIN
+/ * Opening a cursor and storing the returned cursor ID . * /
+curChkAvl := DBMS_SQL.OPEN_CURSOR;
+/ * Parsing the SQL query with the columns in the SELECT list.
+* /
+DBMS_SQL.PRASE (curChkAvl, ‘SELECT :ColumnValue 
+FROM ‘ || varTableName || ‘
+WHERE :ColumnName = :ColumnValue’, DBMS_SQL.V7);
+/ * Binding columns to Cursor Columns . * /
+DBMS_SQL.BIND_VARIABLE (curChkAvl, ‘ColumnName’, varColumnName);
+DBMS_SQL.BIND_VARIABLE (curChkAvl, ColumnValue’ , varColumnValue);
+/ * Executing the SQL statement . * /
+EXECUTE_FEEDBACK := DBMS_SQL.EXECUTE(curChkAvl);
+
+/ * Determining if the SQL query execution returned records . * /
+IF DBMS_SQL.FETCH_ROWS (curChkAvl) = 0 THEN
+RETURN 0;
+ELSE
+RETURN 1;
+END IF;
+/ * Closing the Cursor . * /
+DBMS_SQL.CLOSE_CURSOR (curChkAvl);
+END;
+/
+
+
+Example :
+CREATE OR REPLACE PROCEDURE DestroyObject (varObjtype IN Varchar2,
+varObjName IN Varchar2) IS
+/ * Craeting a static cursor to retrieve user objects . * /
+CURSOR OBJ_CUR IS
+SELECT OBJECT_NAME, OBJECT_TYPE FROM USER_OBJECTS
+WHERE OBJECT_NAME LIKE UPPER(varObjName)
+AND OBJECT_TYPE LIKE UPPER(varOBJType)
+ORDER BY OBJECT_NAME;
+/ * Declaring a handle to the Dynamic SQL cursor . * /
+curDrop Integer;
+
+BEGIN
+/ * For each object in the cursor . * /
+FOR OBJ_REC IN OBJ_CUR
+LOOP
+/ * Opening a cursor and returning cursor ID . * /
+curDrop := DBMS_SQL.OPEN_CURSOR;
+/ * Parsing dynamic SQL command to drop the object . * /
+DBMS_SQL.PARSE (curDrop, ‘DROP’ || OBJ_REC.OBJECT_TYPE || ‘ ‘
+|| OBJ_REC.OBJECT_NAME, DBMS_SQL.V7);
+ 
+/ * Closing the cursor . * /
+DBMS_SQL.CLOSE_CURSOR (curDrop);
+END LOOP;
+END;
+/
+
+
+
+Example :
+CREATE OR REPLACE PROCEDURE CreateView (varTableName IN Varchar2,
+varViewName IN Varchar2) IS
+/ * Declaring a handle to the Dynamic SQL cursor . * /
+curView Integer;
+BEGIN
+/ * Opening a cursor and returning a cursor ID . * /
+curView := DBMS_SQL.OPEN_CURSOR;
+/ * Parsing dynamic SQL command to create a view . * ?
+DBMS_SQL.PARSE (curView, ‘CREATE VIEW ‘ || varViewName || ‘
+AS SELECT * FROM || varTableName, DBMS_SQL.V7);
+/ * Binding columns to Cursor Columns . * /
+DBMS_SQL.BIND_VARIABLE (curView, ‘ViewName’,varViewName);
+/ * Closing the cursor . * /
+DBMS_SQL.CLOSE_CURSOR (curVIew);
+END;
+/
+
+
+
+Example :
+CREATE OR REPLACE PROCEDURE DescStructure
+(varCursor SYS_REFCURSOR) IS
+
+/ * Delcaring a REF Cursor . * /
+curRef SYS_REFCURSOR;
+
+/ * Declaring a DBMS_SQL Cursor . * /
+curDyn Integer;
+
+/ * Declaring a variable to hold the number of columns . * /
+varNoOfCols Integer;
+
+/ * Decl;aring a record type . * /
+varDescTab DBMS_SQL.DESC_TAB;
+BEGIN
+
+
+/ * Assigning the cursor received as a parameter to a local REF Cursor . * /
+curRef := varCursor;
+/ * Converting A REF Cursor TO DBMS_SQL Cursor. * /
+curDyn := DBMS_SQL.TO_CURSOR_NUMBER(curRef);
+
+/ * Calling DESCRIBE_COLUMNS to populats the table with the 
+description of each column * /
+DBMS_SQL.DESCRIBE_COLUMNS(curDyn, varNoOfCols, varDescTab);
+
+/ * Displaying the number of columns . * /
+DBMS_OUTPUT.PUT_LINE(‘number of columns = ‘ || varNoOfCols);
+
+/ * Displaying the column description . * /
+DBMS_OUTPUT.NEW_LINE;
+DBMS_OUTPUT.PUT_LINE(‘Columns’);
+DBMS_OUTPUT.PUT_LINE(‘================================’);
+
+/ * Traversing through the available columns . * /
+FOR i IN 1 ..varNoOfCols
+LOOP
+
+/ * Retrieving the column description for each column in the loop. * /
+DBMS_OUTPUT.PUT_LINE(varDescTab(i).col_name);
+END LOOP;
+
+/ * Closing the cursor . * /
+DBMS_SQL.CLOSE_CURSOR(curDyn);
+
+/ * Handling Exceptions . * /
+EXECPTION
+WHEN OTHERS THEN
+IF DBMS_SQL.IS_OPEN(curDyn) THEN
+DBMS_SQL.CLOSE_CURSOR(curDyn);
+END IF;
+RAISE;
+END DescStructure;
+/

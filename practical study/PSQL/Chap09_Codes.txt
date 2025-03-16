@@ -1,0 +1,223 @@
+Example 1:
+SELECT FD_NO, TYPE, PERIOD, OPNDT, DUEDT, AMT, INTRATE, DUEAMT, 
+		ROUND(AMT + (AMT * ROUND(SYSDATE - OPNDT)/365 * (INTRATE/100)), 2) 
+	FROM FD_DTLS WHERE DUEDT > SYSDATE;
+
+Example 2:
+SELECT Fd_No, Type, Period, OpnDt, DueDt, Amt, IntRate, DueAmt, 
+		ROUND(Amt + (Amt * ROUND(SysDate - OpnDt)/365 * (IntRate/100)), 2) "Pre Maturity Amount" 
+	FROM Fd_Dtls WHERE DueDt > SysDate;
+
+Example 3:
+SELECT * FROM Trans_Mstr WHERE Amt >= 500 AND Amt <= 5000  AND Amt <= 5000
+	AND TO_CHAR(Dt) = TO_CHAR(SysDate);
+
+Example 4:
+SELECT Cust_no, FName || ' ' || MName || ' ' || LName  "Customers"
+	FROM Cust_Mstr, Addr_Dtls
+		WHERE Cust_Mstr.Cust_No = Addr_Dtls.Code_No 
+			AND (Occup = 'Information Technology' OR Occup = 'Self Employed') 
+			AND Cust_No LIKE 'C%';
+
+Example 5:
+SELECT Cust_No, FName || ' ' || MName  || ' ' || LName  "Customers",
+		ROUND((SYSDATE - DOB_Inc)/365) "Age"
+	FROM Cust_Mstr 
+		WHERE (ROUND((SYSDATE - DOB_Inc)/365) < 25 AND LName='Bayross') 
+			OR (ROUND((SYSDATE - DOB_Inc)/365) > 25 
+				AND ROUND((SYSDATE - DOB_Inc)/365) < 55) AND Cust_No LIKE 'C%';
+
+Example 6:
+SELECT Acct_No, Type, Opr_Mode, OpnDt, CurBal, Status 
+	FROM Acct_Mstr WHERE NOT (Opr_Mode = 'SI' OR Opr_Mode = 'JO');
+
+Example 7:
+SELECT * FROM Trans_Mstr WHERE TO_CHAR(DT, 'MM') BETWEEN 01 AND 03;
+SELECT * FROM Trans_Mstr 
+	WHERE TO_CHAR(DT, 'MM') >= 01 AND TO_CHAR(DT, 'MM') <= 03;
+
+Example 8:
+SELECT DISTINCT Acct_No FROM Trans_Mstr 
+	WHERE TO_CHAR(DT, 'MM') NOT BETWEEN 01 AND 04;
+
+Example 9:
+SELECT Fname, Lname, DOB_INC "Birthdate", Occup FROM Cust_Mstr 
+	WHERE Fname LIKE 'Ch%';
+
+Example 10:
+SELECT Fname, Lname, DOB_INC "Birthdate", Occup FROM Cust_Mstr 
+	WHERE Fname LIKE '_a%' OR Fname LIKE '_s%';
+
+Example 11:
+SELECT Fname, Lname, DOB_INC "Birthdate", Occup FROM Cust_Mstr 
+	WHERE Fname LIKE 'Iv__';
+
+Example 12:
+SELECT Fname, Lname, DOB_INC "Birthdate", Occup FROM Cust_Mstr 
+	WHERE Fname IN('Hansel', 'Mamta', 'Namita', 'Aruna');
+
+Example 13:
+SELECT Fname, Lname, DOB_INC "Birthdate", Occup FROM Cust_Mstr 
+	WHERE Fname NOT IN('Hansel', 'Mamta', 'Namita', 'Aruna');
+
+Example 14:
+DESC DUAL
+SELECT * FROM DUAL;
+SELECT 2*2 FROM DUAL;
+
+Example 15:
+SELECT SYSDATE FROM DUAL;
+
+Example 16:
+SELECT AVG(CurBal) "Average Balance" FROM Acct_Mstr;
+
+Example 17:
+SELECT MIN(CurBal) "Minimum Balance" FROM Acct_Mstr;
+
+Example 18:
+SELECT COUNT(Acct_No) "No. of Accounts" FROM Acct_Mstr;
+
+Example 19:
+SELECT MAX(CurBal) "Maximum Balance" FROM Acct_Mstr;
+
+Example 20:
+SELECT SUM(CurBal) "Total Balance" FROM Acct_Mstr;
+
+Example 21:
+SELECT ABS(-15) "Absolute" FROM DUAL;
+
+Example 22:
+SELECT POWER(3,2) "Raised" FROM DUAL;
+
+Example 23:
+SELECT ROUND(15.19,1) "Round" FROM DUAL;
+
+Example 24:
+SELECT SQRT(25) "Square Root" FROM DUAL;
+
+SELECT EXP(5) "Exponent" FROM DUAL;
+
+SELECT LOG(25, 4) "Log" FROM DUAL;
+
+SELECT LN(4) "Log" FROM DUAL;
+
+SELECT VARIANCE(Char_Length) "Variance" FROM ALL_TAB_COLUMNS;
+
+SELECT EXTRACT(YEAR FROM DATE '2004-07-02') "Year", 
+	EXTRACT(MONTH FROM SYSDATE) "Month" FROM DUAL;
+
+SELECT GREATEST(4, 5, 17) "Num", GREATEST('4', '5', '17') "Text" FROM DUAL;
+
+SELECT LEAST(4, 5, 17) "Num", LEAST('4', '5', '17') "Text" FROM DUAL;
+
+SELECT MOD(15, 7) "Mod1", MOD(15.7, 7) "Mod2" FROM DUAL;
+
+SELECT TRUNC(125.815, 1) "Trunc1", TRUNC(125.815, -2) "Trunc2" FROM DUAL;
+
+SELECT FLOOR(24.8) "Flr1", FLOOR(13.15) "Flr2" FROM DUAL;
+
+SELECT CEIL(24.8) "CeilFlr1",CEIL(13.15) "Ceil2" FROM DUAL;
+
+Example 25:
+SELECT LOWER('IVAN BAYROSS') "Lower" FROM DUAL;
+
+Example 26:
+SELECT INITCAP('IVAN BAYROSS') "Title Case" FROM DUAL;
+
+Example 27:
+SELECT UPPER('Ms. Carol') "Capitalised"  FROM DUAL;
+
+SELECT ASCII('a') "ASCII1", ASCII('Aa') "ASCII2" FROM DUAL;
+
+SELECT COMPOSE('a' || UNISTR('\0301')) "Composed" FROM DUAL;
+
+SELECT DECOMPOSE(COMPOSE('a' || UNISTR('\0301'))) "Decomposed" FROM DUAL;
+
+SELECT DUMP('SCT') "Dump1", DUMP('SCT', 1017) "Dump2" FROM DUAL;
+
+SELECT INSTR('SCT on the net', 't') "Instr1", INSTR('SCT on the net', 't', 1, 2) "Instr2" 
+	FROM DUAL;
+
+SELECT SOUNDEX('SCT on the net') "Sound" FROM DUAL;
+
+SELECT TRANSLATE('1sct523', '123', '7a9') "Change" FROM DUAL;
+
+SELECT SUBSTR('This is a test', 6, 2) "Extracted" FROM DUAL;
+
+SELECT LENGTH('SHARANAM') "Length" FROM DUAL;
+
+SELECT LTRIM('NISHA','N') "Left" FROM DUAL;
+
+SELECT RTRIM('SUNILA','A') "RTRIM" FROM DUAL;
+
+SELECT TRIM('  Hansel   ') "Trim both sides" FROM DUAL;
+SELECT TRIM(LEADING 'x' FROM 'xxxHanselxxx') "Remove prefixes" FROM DUAL;
+SELECT TRIM(BOTH 'x' FROM 'xxxHanselxxx') "Remove prefixes N suffixes" FROM DUAL;
+SELECT TRIM(BOTH '1' FROM '123Hansel12111') "Remove string" FROM DUAL;
+
+SELECT LPAD('Page 1',10,'*') "Lpad" FROM DUAL;
+
+SELECT RPAD(Fname,10,'x') "RPAD Example" FROM Cust_Mstr 
+	WHERE Fname = 'Ivan';
+
+SELECT VSIZE('SCT on the net') "Size" FROM DUAL;
+
+
+UPDATE Acct_Mstr SET CurBal = CurBal + TO_NUMBER(SUBSTR('$100',2,3));
+
+SELECT TO_CHAR(17145, '$099,999') "Char" FROM DUAL;
+
+SELECT TO_CHAR(DT, 'Month DD, YYYY') "New Date Format" FROM Trans_Mstr 
+	WHERE Trans_No = 'T1';
+
+INSERT INTO CUST_MSTR(CUST_NO, FNAME, MNAME, LNAME, DOB_INC) 
+	VALUES('C1', 'Ivan', 'Nelson', 'Bayross', 
+		TO_DATE('25-JUN-1952 10:55 A.M.', 'DD-MON-YY HH:MI  A.M.'));
+
+SELECT ADD_MONTHS(SYSDATE, 4) FROM DUAL;
+
+SELECT SYSDATE, LAST_DAY(SYSDATE) "LastDay" FROM DUAL;
+
+SELECT MONTHS_BETWEEN('02-FEB-92', '02-JAN-92') "Months" FROM DUAL;
+
+SELECT NEXT_DAY('06-JULY-02', 'Saturday') "NEXT DAY" FROM DUAL;
+
+SELECT TRUNC(To_Date('01-JUL-04'), 'YEAR') "Year" FROM DUAL;
+
+SELECT ROUND(TO_DATE('01-JUL-04'), 'YEAR') "Year" FROM DUAL;
+
+SELECT NEW_TIME(TO_DATE('2004/07/01 01:45', 'yyyy/mm/dd HH24:MI'), 'AST', 'MST') "MST" 
+	FROM DUAL;
+
+SELECT TO_CHAR(SYSDATE, 'DD-MM-YY') FROM DUAL;
+
+SELECT TO_DATE ('06/07/02', 'DD/MM/YY') FROM DUAL;
+
+SELECT Trans_No, Acct_No, TO_CHAR(DT, 'DD/MM/YY') "Transaction Date", 
+		Particular, DR_CR, Amt, Balance 
+	FROM Trans_Mstr WHERE Acct_No = 'SB9' ORDER BY TO_CHAR(DT, 'MM');
+
+INSERT INTO Cust_Mstr (Cust_No, Fname, Lname, Dob_Inc) 
+	VALUES('C100', 'Sharanam', 'Shah', 
+		TO_DATE('03/Jan/1981  12:23:00', 'DD/MON/YY hh:mi:ss'));
+
+SELECT Cust_No, Fname, Lname, Dob_Inc FROM Cust_Mstr WHERE Cust_No LIKE 'C_';
+
+SELECT Cust_No, Fname, Lname, TO_CHAR(DOB_Inc, 'DDTH-MON-YY') "DOB_DDTH"
+	FROM Cust_Mstr WHERE Cust_No LIKE 'C_';
+
+SELECT Cust_No, Fname, Lname, TO_CHAR(Dob_Inc, 'DDSP') "DOB_DDSP" 
+	FROM Cust_Mstr WHERE Cust_No LIKE 'C_';
+
+SELECT Cust_No, Fname, Lname, TO_CHAR(Dob_Inc, 'DDSPTH') "DOB_DDSPTH" 
+	FROM Cust_Mstr WHERE Cust_No LIKE 'C_';
+
+SELECT UID FROM DUAL;
+
+SELECT USER FROM DUAL;
+
+SELECT SYS_CONTEXT('USERENV', 'NLS_DATE_FORMAT') "SysContext" FROM DUAL;
+
+SELECT USERENV('LANGUAGE') FROM DUAL;
+
+SELECT COALESCE(ADDR1, ADDR2, CITY) Addr FROM ADDR_DTLS;

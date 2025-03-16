@@ -1,0 +1,126 @@
+Example 1:
+DECLARE
+/* Declaration of memory variables and constants to be used in the  Execution section.*/
+	mCUR_BAL  number(11,2);
+	mACCT_NO varchar2(7);
+	mFINE number(4) := 100;
+	mMIN_BAL constant number(7,2) := 5000.00;
+
+BEGIN
+/* Accept the Account number from the user*/
+	mACCT_NO := &mACCT_NO;
+/* Retrieving the current balance from the ACCT_MSTR table where the ACCT_NO in the table is equal to the mACCT_NO entered by the user.*/
+	SELECT CURBAL INTO mCUR_BAL FROM ACCT_MSTR WHERE ACCT_NO= mACCT_NO;
+/* Checking if the resultant balance is less than the minimum balance of Rs.5000. If the condition is satisfied an amount of Rs.100 is deducted as a fine from the current balance of the corresponding ACCT_NO.*/
+	IF mCUR_BAL < mMIN_BAL THEN
+		UPDATE ACCT_MSTR SET CURBAL = CURBAL – mFINE 
+			WHERE ACCT_NO = mACCT_NO;
+	END IF;
+END;
+
+
+Example 2:
+DECLARE
+	i number := 0;
+BEGIN
+	LOOP
+		i := i + 2;
+		EXIT WHEN i > 10;
+	END LOOP;
+	dbms_output.put_line('Loop exited as the value of i has reached ' || to_char(i));
+END;
+
+
+Example 3:
+DECLARE
+/* Declaration of memory variables and constants to be used in the Execution section.*/
+	pi constant number(4,2) := 3.14 ;
+	radius number(5);
+	area number(14,2);
+
+BEGIN
+/* Initialize the radius to 3, since calculations are required for radius 3 to 7 */
+	radius := 3;
+
+/* Set a loop so that it fires till the radius value reaches 7 */
+	WHILE RADIUS <= 7
+	LOOP
+	/* Area calculation for a circle */
+		area := pi * power(radius,2);
+ 
+	/* Insert the value for the radius and its corresponding area calculated in the table */
+		INSERT INTO areas 	VALUES (radius, area);
+
+	/* Increment the value of the variable radius by 1 */
+		radius := radius + 1;
+	END LOOP;
+END;
+
+
+Example 4:
+DECLARE
+/* Declaration of memory variables and constants to be used in the Execution section.*/
+	given_number varchar(5) := '5639';
+	str_length number(2);
+	inverted_number varchar(5);
+
+BEGIN
+/* Store the length of the given number */
+	str_length := length(given_number);
+/* Initialize the loop such that it repeats for the number of times equal to the length of the given number. Also, since the number is required to be inverted, the loop should consider the last number first and store it i.e. in reverse order */
+	FOR cntr IN REVERSE 1..str_length 
+	/* Variables used as counter in the for loop need not be declared i.e. cntr declaration is not required */
+	LOOP
+	/* The last digit of the number is obtained using the substr function, and stored in a variable, while retaining the previous digit stored in the variable*/
+		inverted_number := inverted_number || substr(given_number, cntr, 1);
+	END LOOP;
+
+/* Display the initial number, as well as the inverted number, which is stored in the variable on screen */
+	dbms_output.put_line ('The Given number is ' || given_number );
+	dbms_output.put_line ('The Inverted number is ' || inverted_number );
+END;
+
+Example 5:
+CREATE TABLE INACTV_ACCT_MSTR (
+	ACCT_NO VARCHAR2(10), OPNDT DATE, TYPE VARCHAR2(2));
+
+DECLARE
+/* Declaration of memory variables and constants to be used in the Execution section.*/
+	mACCT_NO VARCHAR2(10);
+	mANS VARCHAR2(3);
+	mOPNDT DATE;
+	mTYPE VARCHAR2(2);
+BEGIN
+/* Accept the Account number from the user*/
+	mACCT_NO := &mACCT_NO;
+
+/* Fetch the account number into a variable */
+	SELECT 'YES' INTO mANS FROM TRANS_MSTR WHERE ACCT_NO = mACCT_NO 
+		GROUP BY ACCT_NO HAVING MAX(SYSDATE - DT) >365;
+ 
+/* If there are no transactions taken place in last 365 days the execution control is transferred to a user labelled section of code, labelled as mark_status in this example. */
+	IF mANS = 'YES' THEN
+		GOTO mark_status;
+	ELSE
+dbms_output.put_line('Account number: ' || mACCT_NO || 'is active');
+	END IF;
+
+/* A labelled section of code which updates the STATUS of account number held in the ACCT_MSTR table. Further the ACCT_NO, OPNDT and the TYPE are inserted in to the table INACTV_ACCT_MSTR. */
+  	<< mark_status>>
+	UPDATE ACCT_MSTR SET STATUS = 'I' WHERE ACCT_NO = mACCT_NO;
+	SELECT OPNDT, TYPE INTO mOPNDT, mTYPE 
+		FROM ACCT_MSTR WHERE ACCT_NO = mACCT_NO;
+	INSERT INTO INACTV_ACCT_MSTR (ACCT_NO, OPNDT,TYPE) 
+		VALUES (mACCT_NO, mOPNDT, mTYPE);
+	dbms_output.put_line(' Account number: '|| mACCT_NO || 'is marked as inactive');
+END;
+
+
+Example 6:
+
+
+
+
+
+
+

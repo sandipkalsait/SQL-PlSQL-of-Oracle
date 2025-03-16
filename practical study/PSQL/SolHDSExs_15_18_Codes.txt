@@ -1,0 +1,202 @@
+16. PL/SQL TRANSACTIONS
+Exercise 1:
+a)
+DECLARE
+/* Cursor Crsr_Item_Rqst retrieves all records from the Item_Requisite table. */
+	CURSOR Crsr_Item_Rqst IS 
+		SELECT Item_Id, Dept_Code, Quantity FROM Item_Requisite;
+/* Cursor Crsr_Item_Mstr accepts the value of Item_Id from the Item_Master table based on the value passed as a parameter. */
+	CURSOR  Crsr_Item_Mstr (num_Item_Id number) IS
+		SELECT Item_Id FROM Item_Master WHERE Item_Id = num_Item_Id;
+/* Variables that hold data from the cursor Crsr_Item_Rqst. */
+	num_ItemId number(4);
+	num_DeptCode number;
+	num_Qty number(3);
+/* Variable that hold data from the cursor Crsr_Item_Mstr. */
+	num_Mast_Uptd number(4);
+/* Variable to check negative values in Bal_Stock after updation. */
+	num_BalStock number;
+
+BEGIN
+	num_BalStock := 0;
+/* Open the Crsr_Item_Rqst cursor. */
+ 	OPEN Crsr_Item_Rqst;
+/* Defining a savepoint */
+	SAVEPOINT svpnt_No_Change;
+
+	LOOP
+	/* Fetch the records from the Crsr_Item_Rqst cursor. */
+		FETCH Crsr_Item_Rqst INTO num_ItemId, num_DeptCode, num_Qty;
+		EXIT WHEN Crsr_Item_Rqst%NOTFOUND;
+	/* Open the Crsr_Item_Mstr cursor. Note that the value of variable passed to the Crsr_Item_Mstr cursor is set to the value of Item_Id in the current row of cursor Crsr_Item_Rqst. */
+		OPEN Crsr_Item_Mstr (num_ItemId);
+		FETCH Crsr_Item_Mstr INTO num_Mast_Uptd;
+
+	/* If the record is found then update quantity else insert a record in the Item_Master table. */
+		IF Crsr_Item_Mstr%FOUND THEN
+		/* If the record is found, then update the Bal_Stock in Item_Master table.  */
+			UPDATE Item_Master SET BalStock = BalStock - num_Qty 
+				WHERE Item_Id = num_ItemId;
+		/* Deleting the record from the Item_Requisite table. */
+			DELETE FROM Item_Requisite 
+				WHERE Item_Id = num_ItemId AND Dept_Code = num_DeptCode;
+		ELSE
+			DBMS_OUTPUT.PUT_LINE('Item ' || num_ItemId || ' is not available for department ' || num_DeptCode || '!!');
+		END IF;
+		CLOSE Crsr_Item_Mstr;
+	END LOOP;
+	CLOSE Crsr_Item_Rqst;
+
+/* Storing the total negative values in BalStock from the 'Item_Master' table into a variable. */
+	SELECT SUM(BalStock) INTO num_BalStock FROM Item_Master WHERE BalStock < 0;
+/* Checking it the value of num_BalStock is equal to zero. */
+	IF num_BalStock = 0 THEN
+	/* Make the changes permanent. */
+		COMMIT;
+	ELSE
+	/* Undo the changes made to the 'Emp' table. */
+		ROLLBACK TO SAVEPOINT svpnt_No_Change;
+	END IF;
+END;
+
+
+b)
+DECLARE
+/* Cursor Crsr_Item_Rqst retrieves all records from the Item_Requisite table. */
+	CURSOR Crsr_Item_Rqst IS 
+		SELECT Item_Id, Dept_Code, Quantity FROM Item_Requisite;
+/* Cursor Crsr_Item_Mstr accepts the value of Item_Id from the Item_Master table based on the value passed as a parameter. */
+	CURSOR  Crsr_Item_Mstr (num_Item_Id number) IS
+		SELECT Item_Id FROM Item_Master WHERE Item_Id = num_Item_Id;
+/* Variables that hold data from the cursor Crsr_Item_Rqst. */
+	num_ItemId number(4);
+	num_DeptCode number;
+	num_Qty number(3);
+/* Variable that hold data from the cursor Crsr_Item_Mstr. */
+	num_Mast_Uptd number(4);
+/* Variable to check negative values in Bal_Stock after updation. */
+	num_BalStock number;
+
+BEGIN
+	num_BalStock := 0;
+/* Open the Crsr_Item_Rqst cursor. */
+ 	OPEN Crsr_Item_Rqst;
+
+	LOOP
+	/* Fetch the records from the Crsr_Item_Rqst cursor. */
+		FETCH Crsr_Item_Rqst INTO num_ItemId, num_DeptCode, num_Qty;
+		EXIT WHEN Crsr_Item_Rqst%NOTFOUND;
+	/* Open the Crsr_Item_Mstr cursor. Note that the value of variable passed to the Crsr_Item_Mstr cursor is set to the value of Item_Id in the current row of cursor Crsr_Item_Rqst. */
+		OPEN Crsr_Item_Mstr (num_ItemId);
+		FETCH Crsr_Item_Mstr INTO num_Mast_Uptd;
+	/* If the record is found then update quantity else insert a record in the Item_Master table. */
+		IF Crsr_Item_Mstr%FOUND THEN
+		/* Defining a savepoint */
+			SAVEPOINT svpnt_No_Change;
+		/* If the record is found, then update the Bal_Stock in Item_Master table.  */
+			UPDATE Item_Master SET BalStock = BalStock - num_Qty 
+				WHERE Item_Id = num_ItemId;
+		/* Deleting the record from the Item_Requisite table. */
+			DELETE FROM Item_Requisite 
+				WHERE Item_Id = num_ItemId AND Dept_Code = num_DeptCode;
+		/* Storing the total negative values in Bal_Stock from the 'Item_Master' table into a variable. */
+			SELECT BalStock INTO num_BalStock FROM Item_Master 
+				WHERE Item_ID = num_ItemId;
+		/* Checking it the value of num_BalStock is equal to zero. */
+			IF num_BalStock < 0 THEN
+			/* Undo the changes made to the 'Emp' table. */
+				ROLLBACK TO SAVEPOINT svpnt_No_Change;
+ELSE
+			/* Make the changes permanent. */
+				COMMIT;
+			END IF;
+		ELSE
+			DBMS_OUTPUT.PUT_LINE('Item ' || num_ItemId || ' is not available for department ' || num_DeptCode || '!!');
+		END IF;
+		CLOSE Crsr_Item_Mstr;
+	END LOOP;
+	CLOSE Crsr_Item_Rqst;
+END;
+
+
+17. PL/SQL SECURITY
+Exercise 1
+LOCK TABLE CLIENT_MASTER IN Exclusive Mode NOWAIT;
+
+Exercise 2
+DECLARE
+	less_than_target EXCEPTION;
+	mclient_no Client_Master.Clientno%type;
+	mbal_due Client_Master.Baldue%type;
+BEGIN
+	SELECT Clientno, Baldue INTO mclient_no, mbal_due FROM Client_Master 
+		WHERE Clientno  = &mclient_no;
+	IF mbal_due > 5000 THEN
+		RAISE less_than_target;
+	END IF;
+EXCEPTION
+	WHEN less_than_target THEN
+		DBMS_OUTPUT.PUT_LINE ('Balance cannot be less than Rs.0');
+END;
+
+
+18. PL/SQL DATABASE OBJECTS
+Exercise 1
+CREATE FUNCTION f_Client_no_chk(vClientno IN varchar2) RETURN number IS 
+	dummyClient varchar2(6);	
+BEGIN
+	SELECT client_no INTO dummyclient FROM CLIENT_MASTER 
+		WHERE client_no = vClientno; 
+	DBMS_OUTPUT.PUT_LINE('Valid Client');
+EXCEPTION
+	WHEN NO_DATA_FOUND THEN
+		DBMS_OUTPUT.PUT_LINE('Invalid Client');
+END;
+
+Exercise 2:
+DROP FUNCTION f_Client_no_chk;
+
+Exercise 3:
+CREATE OR REPLACE PACKAGE myPackage AS
+	FUNCTION f_Client_no_chk(vClientno IN varchar2) RETURN number;
+END myPackage;
+
+/* Package body */
+CREATE OR REPLACE PACKAGE BODY myPackage IS
+	FUNCTION f_Client_no_chk(vClientno IN varchar2) RETURN number IS
+		dummyClient varchar2(6);	
+	BEGIN
+		SELECT client_no INTO dummyclient FROM Client_Master 
+			WHERE client_no = vClientno; 
+			DBMS_OUTPUT.PUT_LINE('Valid Client');
+	EXCEPTION
+		WHEN NO_DATA_FOUND THEN
+			DBMS_OUTPUT.PUT_LINE('Invalid Client');
+	END;
+END myPackage;
+
+Exercise 4:
+CREATE TRIGGER audit_client AFTER UPDATE ON Client_Master 
+	FOR EACH ROW
+DECLARE
+	oper varchar2(8);
+	client_no varchar2(6);
+	name varchar2(20);
+	bal_due number(10, 2);
+BEGIN
+	IF updating THEN 
+		oper := 'update';
+	END IF;
+	client_no := :old.client_no;
+	name  := :old.name;
+	bal_due := :old.bal_due;
+	INSERT INTO audit_trail VALUES(client_no, name, bal_due, oper, user, sysdate);  
+END;
+
+Exercise 5:
+DROP TRIGGER audit_client;
+
+
+
+
+

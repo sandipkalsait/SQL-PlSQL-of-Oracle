@@ -1,0 +1,334 @@
+Example 1:
+DECLARE
+	mBAL number(8,2);
+BEGIN
+/* Insertion of a record in the 'TRANS_MSTR' table for withdrawals */
+	INSERT INTO TRANS_MSTR 
+		(TRANS_NO, ACCT_NO, DT, TYPE, PARTICULAR, DR_CR, AMT, BALANCE) 
+		VALUES('T100', 'CA10', '04-JUL-2004', 'C', 'Telephone Bill', 'W', 1000, 31000);
+ 
+/* Updating the current balance of account number CA10 in the 'ACCT_MSTR' table. */
+	UPDATE ACCT_MSTR SET CURBAL = CURBAL - 1000 WHERE ACCT_NO = 'CA10';
+
+/* Defining a savepoint. */
+	SAVEPOINT no_update;
+
+/* Insertion of a record in the 'TRANS_MSTR' table for deposits. */
+	INSERT INTO TRANS_MSTR 
+		(TRANS_NO, ACCT_NO, DT, TYPE, PARTICULAR, DR_CR, AMT, BALANCE) 
+		VALUES('T101', 'CA10', '04-JUL-2004', 'C', 'Deposit', 'D', 140000, 171000);
+
+/* Updating the current balance of account number CA10 in the 'ACCT_MSTR' table. */
+	UPDATE ACCT_MSTR SET CURBAL = CURBAL + 140000 WHERE ACCT_NO = 'CA10';
+
+/* Storing the total current balance from the 'ACCT_MSTR' table into a variable. */
+	SELECT SUM(CURBAL)  INTO mBAL FROM ACCT_MSTR;
+
+/* Checking if total current balance exceeds 200000. */
+	IF mBAL > 200000 THEN 
+	/* Undo the changes made to the 'TRANS_MSTR' table. */
+		ROLLBACK To SAVEPOINT no_update;
+	END IF;
+
+/* Make the changes permanent. */
+	COMMIT;
+END;
+
+
+Example 2:
+	SELECT EMP_NO, FNAME, DEPT FROM EMP_MSTR ORDER BY FNAME;
+
+
+Example 3:
+	SELECT EMP_NO, FNAME, DEPT FROM EMP_MSTR WHERE BRANCH_NO = 'B1';
+
+
+Example 4:
+BEGIN
+	UPDATE EMP_MSTR SET BRANCH_NO = &BRANCH_NO 
+		WHERE EMP_NO = &EMP_NO;
+
+	IF SQL%FOUND THEN
+		dbms_output.put_line('Employee Successfully Transferred');
+	END IF;
+
+	IF SQL%NOTFOUND THEN
+		dbms_output.put_line('Employee Number does not Exist');
+	END IF;
+END;
+
+
+Example 5:
+	DECLARE
+		Rows_Affected char(4);
+	BEGIN
+		UPDATE ACCT_MSTR SET STATUS = 'A' WHERE STATUS = 'S' AND 
+			BRANCH_NO IN(SELECT BRANCH_NO FROM BRANCH_MSTR 
+				WHERE NAME = 'Darya Ganj');
+ 
+	Rows_Affected := TO_CHAR(SQL%ROWCOUNT);
+
+	IF SQL%ROWCOUNT > 0 THEN
+		dbms_output.put_line(Rows_Affected || ' Account(s) Activated Successfully');
+	ELSE				
+		dbms_output.put_line('Currently there exist no Inactive Accounts in the Darya Ganj Branch');
+	END IF;
+END;
+
+
+Example 6:
+
+CREATE TABLE INACTV_ACCT_MSTR (
+	ACCT_NO VARCHAR2(10), OPNDT DATE, TYPE VARCHAR2(2));
+
+DECLARE
+/* Declaration of the cursor named Crsr_NoTrans. The active data set will include the account numbers and status of all the accounts held in the ACCT_MSTR table. */
+	CURSOR Crsr_NoTrans IS 
+		SELECT ACCT_NO, STATUS, OPNDT, TYPE FROM ACCT_MSTR 
+			WHERE ACCT_NO IN (SELECT ACCT_NO FROM TRANS_MSTR 
+				GROUP BY ACCT_NO HAVING MAX(SYSDATE - DT) >365);
+
+/* Declaration of memory variable that holds data fetched from the cursor. */
+	str_ACCT_NO ACCT_MSTR.ACCT_NO%type;
+	str_STATUS ACCT_MSTR.STATUS%type;
+	dt_OPNDT ACCT_MSTR.OPNDT%type;
+	str_TYPE ACCT_MSTR.TYPE%type;
+
+BEGIN
+	OPEN Crsr_NoTrans;
+	/* If the cursor is open continue with the data processing else display an appropriate error message. */
+	IF Crsr_NoTrans%ISOPEN THEN
+		LOOP
+			FETCH Crsr_NoTrans INTO str_ACCT_NO, str_STATUS, dt_OPNDT, str_TYPE;
+			EXIT WHEN Crsr_NoTrans%NOTFOUND;
+			IF Crsr_NoTrans%FOUND THEN
+			/* Updating status to 'S' and inserting each record into the INACTV_ACCT_MSTR table to keep track of the accounts marked as inactive. */
+				UPDATE ACCT_MSTR SET STATUS = 'S' WHERE ACCT_NO = str_ACCT_NO;
+			/* Inserting a record in the INACTV_ACCT_MSTR table. */
+				INSERT INTO INACTV_ACCT_MSTR 
+					VALUES(str_ACCT_NO, dt_OPNDT, str_TYPE);
+			END IF;
+		END LOOP;
+	/* Make the changes permanent. */
+		COMMIT;
+	ELSE
+		dbms_output.put_line ('Unable to open Cursor');
+	END IF;	
+/* Close cursor Crsr_NoTrans. */
+	CLOSE Crsr_NoTrans;
+END;
+
+
+Example 7:
+	DECLARE
+		CURSOR Crsr_HiFD IS
+			SELECT FNAME || ' ' || LNAME, FD_NO, AMT 
+				FROM CUST_MSTR C, ACCT_FD_CUST_DTLS A, FD_DTLS F
+					WHERE C.CUST_NO = A.CUST_NO AND A.ACCT_FD_NO = F.FD_SER_NO
+					ORDER BY AMT Desc;
+		str_NAME VARCHAR2(50);
+		str_FD_NO FD_DTLS.FD_NO%type;
+		num_AMT FD_DTLS.AMT%type;
+	
+	BEGIN
+		OPEN Crsr_HiFD;
+		dbms_output.Put_line (' Name                      FD No.   Amount');
+		dbms_output.Put_line (' ------------------------- ---------- ----------');
+	
+		LOOP
+	     	FETCH Crsr_HiFD INTO str_NAME, str_FD_NO, num_AMT; 
+		EXIT WHEN (Crsr_HiFD%ROWCOUNT - 1) = 5 or Crsr_HiFD%NOTFOUND;
+		dbms_output.Put_line(str_NAME || '   ' || str_FD_NO || '   ' || num_AMT);
+	END LOOP;
+END;
+
+Example 8:
+DECLARE
+/* Declaration of the cursor named Crsr_NoTrans. The active data set will include the account numbers and status of all the accounts held in the ACCT_MSTR table. */
+	CURSOR Crsr_NoTrans IS 
+	SELECT ACCT_NO, STATUS, OPNDT, TYPE FROM ACCT_MSTR 
+		WHERE ACCT_NO IN (SELECT ACCT_NO FROM TRANS_MSTR 
+			GROUP BY ACCT_NO HAVING MAX(SYSDATE - DT) >365);
+
+BEGIN
+/* Use of a cursor FOR LOOP. */
+	FOR NoTrans_Rec IN Crsr_NoTrans
+	LOOP
+	/* Updating status to 'S' and inserting each record into the INACTV_ACCT_MSTR table to keep track of the accounts marked as inactive. */
+		UPDATE ACCT_MSTR SET STATUS = 'S' WHERE ACCT_NO = NoTrans_Rec.ACCT_NO;
+
+	/* Inserting a record in the INACTV_ACCT_MSTR table. */
+		INSERT INTO INACTV_ACCT_MSTR 
+			VALUES (NoTrans_Rec.ACCT_NO, NoTrans_Rec.OPNDT, NoTrans_Rec.TYPE);
+	END LOOP;
+	COMMIT ;
+END;
+
+Example 9:
+CREATE TABLE NEW_BRANCHES(
+	BRANCH_NO VARCHAR2(10),
+	NAME VARCHAR2(25));
+
+INSERT INTO NEW_BRANCHES (BRANCH_NO, NAME) VALUES('B4', 'Mahim');
+INSERT INTO NEW_BRANCHES (BRANCH_NO, NAME) VALUES('B5', 'Borivali');
+INSERT INTO NEW_BRANCHES (BRANCH_NO, NAME) VALUES('B6', 'Darya Ganj');
+INSERT INTO NEW_BRANCHES (BRANCH_NO, NAME) VALUES('B7', 'Thane');
+INSERT INTO NEW_BRANCHES (BRANCH_NO, NAME) VALUES('B8', 'Mulund');
+INSERT INTO NEW_BRANCHES (BRANCH_NO, NAME) VALUES('B9', 'Chembur');
+INSERT INTO NEW_BRANCHES (BRANCH_NO, NAME) VALUES('B10', 'Khar');
+
+DECLARE
+/* Cursor Crsr_Branch_Mstr retrieves all records of NEW_BRANCHES table. */
+	CURSOR Crsr_Branch_Mstr IS SELECT * FROM 	NEW_BRANCHES;
+
+/* Cursor Crsr_Branch_Chk accepts the value of NAME from the current row of cursor Crsr_Branch_Mstr. */
+	CURSOR  Crsr_Branch_Chk (str_BRANCH_NAME varchar2) IS
+		SELECT BRANCH_NO FROM BRANCH_MSTR WHERE NAME = str_BRANCH_NAME;
+
+/* Variables that hold data from the cursor Crsr_Branch_Mstr. */
+	str_BRANCH_NO BRANCH_MSTR.BRANCH_NO%type;
+	str_BRANCH_NAME BRANCH_MSTR.NAME%type;
+
+ 
+/* Variable that hold data from the cursor Crsr_Branch_Chk. */
+	mast_ins_view VARCHAR2(10);
+
+BEGIN
+/* Open the Crsr_Branch_Mstr cursor. */
+ 	OPEN Crsr_Branch_Mstr;
+
+	LOOP
+	/* Fetch the records from the Crsr_Branch_Mstr cursor. */
+		FETCH Crsr_Branch_Mstr INTO str_BRANCH_NO, str_BRANCH_NAME;
+		EXIT WHEN Crsr_Branch_Mstr%NOTFOUND;
+
+	/* Open the Crsr_Branch_Chk cursor. Note that the value of variable passed to the Crsr_Branch_Chk cursor is set to the value of NAME in the current row of cursor Crsr_Branch_Mstr. */
+		OPEN Crsr_Branch_Chk (str_BRANCH_NAME);
+		FETCH Crsr_Branch_Chk INTO mast_ins_view;
+
+	/* If the record is found then display the Branch details like the number of accounts and number of employees in that branch. */
+		IF Crsr_Branch_Chk%FOUND THEN
+			dbms_output.Put_line('Branch ' || str_BRANCH_NAME || ' exist.');
+		ELSE
+			dbms_output.Put_line('Branch ' || str_BRANCH_NAME || ' does not exist. Inserting new branch in the database');
+			INSERT INTO BRANCH_MSTR VALUES (str_BRANCH_NO, str_BRANCH_NAME);
+		END IF;
+
+		CLOSE Crsr_Branch_Chk;
+	END LOOP;
+
+	CLOSE Crsr_Branch_Mstr;
+	COMMIT;
+END;
+
+
+
+Example:
+
+DECLARE
+
+/ *  First cursor * /
+CURSOR curDepartments IS SELECT * FROM Departments;
+
+/ * Second cursor * /
+CURSOR curEmployees(varDeptNo Departments.DepNo%TYPE)
+IS SELECT * FROM Employees WHERE DepNo = varDeptNo;
+
+BEGIN
+
+/ * Defining a For loop for first cursor * /
+FOR typDepartment IN curDepartments
+
+LOOP
+
+/ * Defining a For loop for second cursor * /
+FOR typEmployees IN curEmployees (typDepartment.DeptNo)
+
+LOOP
+
+/ * Inserting data from both the cursor * /
+INSERT INTO EmployeesDept (EmployeeNo, FirstName, LastName,
+DateOfBirth, ContactNo, Salary, Designation, ManagerNo,
+DeptNo, DepartmentName, UserName, Password)
+VALUES (typEmployees.EmployeeNo,
+typEmployees.FirstName, typEmployees.LastName,
+typEmployees.DateOfBirth, typEmployees.ContactNo,
+typEmployees.Salary, typEmployees.Designation,
+typEmployees.ManagerNo, typDepartments.DeptNo,
+typDepartments.DepartmentName, typEmployees.UserName, 
+typEmployees.Password);
+END LOOP;
+END LOOP;
+ 
+/ * Make the changes permanent . * /
+COMMIT;
+END;
+/
+
+
+Example:
+
+SET SERVEROUTPUT ON
+DECLARE
+
+/ * Cursor Declaration. * /
+CURSOR curEmployee IS
+SELECT EmployeeNo, FirstName, LastName, Salary
+FROM Employees FOR UPDATE;
+
+/ * Memory variables to hold the data fetched. * /
+varEmployeeNo Employees.EmployeeNo%TYPE;
+varFirstName Employees.FirstName%TYPE;
+varLastName Employees.LastName%TYPE;
+varSalary Employees.Salary%TYPE;
+
+/ * Memory variables to hold the username and password. * /
+varUsername Employees.Username%TYPE;
+varPassword Employees.Password%TYPE;
+
+ 
+BEGIN 
+
+/ * Opening cursor. * /
+OPEN curEmployees;
+
+/ * If the cursor is open continue with the data processing else displa an appropriate error message. * /
+IF curEmployees%ISOPEN THEN
+LOOP
+FETCH curEmployees
+INTO varEmployeeNo, varFirstName, varLastName, varSalary;
+
+/ * Existing the loop if no records are available. * /
+EXIT WHEN curEmployees%NOTFOUND;
+IF curEmployees%FOUND THEN
+
+/ * Generating Usernames and Passwords. * /
+varUsername := SUBSTR(varFirstname, -2, 2)
+|| SUBSTR(varLastName, 1 , 2) || varEmployeeNo;
+varPassword := SUBSTR(varFirstName, 1 , 2)
+|| SUBSTR(varLastName, 1 , 2)
+|| SUBSTR(TO_CHAR(varSalary), -2, 2);
+
+/ * Updating Employees table with the generated values . * /
+UPDATE Employees SET Username = varUsername,
+Password = varPassword
+WHERE EmployeeNo = varEmployeeNo;
+ENDIF;
+END LOOP;
+
+/ * Making the changes permanent . * /
+COMMIT;
+ELSE
+DBMS_OUTPUT.PUT_LINE(‘No records found in the Employees table’);
+END IF;
+
+/ * Closing cursor. * /
+CLOSE curEmployees;
+END;
+/
+
+
+
+Example:
+
+
